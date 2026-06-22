@@ -1,27 +1,38 @@
 package config
 
 import (
+	"sync"
+
 	"github.com/spf13/viper"
 )
 
-type Config struct {
-	Debug    bool
-	Database Database
+var (
+	once sync.Once
+	cfg  *config
+)
+
+type config struct {
+	debug bool
+	pg    Postgres
 }
 
-func LoadConfig() (*Config, error) {
-	viper.AutomaticEnv()
+func (c *config) Debug() bool        { return c.debug }
+func (c *config) Postgres() Postgres { return c.pg }
 
-	viper.SetConfigName(".env")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
+func Config() *config {
+	once.Do(func() {
+		viper.AutomaticEnv()
 
-	_ = viper.ReadInConfig()
+		viper.SetConfigName(".env")
+		viper.SetConfigType("env")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("../..")
 
-	return &Config{
-		Debug: viper.GetBool("DEBUG"),
-		Database: Database{
-			Postgres: Postgres{
+		_ = viper.ReadInConfig()
+
+		cfg = &config{
+			debug: viper.GetBool("DEBUG"),
+			pg: Postgres{
 				Host:     viper.GetString("POSTGRES_HOST"),
 				Port:     viper.GetString("POSTGRES_PORT"),
 				User:     viper.GetString("POSTGRES_USER"),
@@ -29,6 +40,7 @@ func LoadConfig() (*Config, error) {
 				DBName:   viper.GetString("POSTGRES_DBNAME"),
 				Schema:   viper.GetString("POSTGRES_SCHEMA"),
 			},
-		},
-	}, nil
+		}
+	})
+	return cfg
 }
