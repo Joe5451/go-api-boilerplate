@@ -1,10 +1,10 @@
-package api
+package rest
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"go-api-boilerplate/test/helpers"
+	"go-api-boilerplate/test"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,22 +12,24 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	if err := helpers.InitTestContainer(); err != nil {
-		panic("failed to initialize test container: " + err.Error())
-	}
-
+	test.Setup()
 	code := m.Run()
-
-	if err := helpers.TeardownTestContainer(); err != nil {
-		panic("failed to teardown test container: " + err.Error())
-	}
-
+	test.Teardown()
 	os.Exit(code)
 }
 
+func setupTestApp(t *testing.T) *test.RestApp {
+	app, err := test.InitRestApp(context.Background())
+	if err != nil {
+		t.Fatalf("failed to initialize app: %v", err)
+	}
+	t.Cleanup(app.Close)
+	return app
+}
+
 func TestBookAPI_CreateBook(t *testing.T) {
-	app := helpers.SetupTestApp(t)
-	defer helpers.CleanupDatabase(t)
+	app := setupTestApp(t)
+	defer test.CleanupDatabase(t)
 
 	tests := []struct {
 		name       string
@@ -88,7 +90,7 @@ func TestBookAPI_CreateBook(t *testing.T) {
 
 			if tt.checkDB {
 				var title, author string
-				err := helpers.DB().QueryRow(
+				err := test.DB().QueryRow(
 					context.Background(),
 					"SELECT title, author FROM books WHERE id = 1",
 				).Scan(&title, &author)
@@ -114,8 +116,8 @@ func TestBookAPI_CreateBook(t *testing.T) {
 }
 
 func TestBookAPI_GetBooks(t *testing.T) {
-	app := helpers.SetupTestApp(t)
-	defer helpers.CleanupDatabase(t)
+	app := setupTestApp(t)
+	defer test.CleanupDatabase(t)
 
 	t.Run("basic_list", func(t *testing.T) {
 		createBook(t, "Animal Farm", "George Orwell")
@@ -143,7 +145,7 @@ func TestBookAPI_GetBooks(t *testing.T) {
 		}
 
 		var count int
-		helpers.DB().QueryRow(
+		test.DB().QueryRow(
 			context.Background(),
 			"SELECT COUNT(*) FROM books",
 		).Scan(&count)
@@ -154,7 +156,7 @@ func TestBookAPI_GetBooks(t *testing.T) {
 	})
 
 	t.Run("pagination", func(t *testing.T) {
-		helpers.CleanupDatabase(t)
+		test.CleanupDatabase(t)
 		for i := 1; i <= 5; i++ {
 			createBook(t, "Book "+string(rune('0'+i)), "Author")
 		}
@@ -197,8 +199,8 @@ func TestBookAPI_GetBooks(t *testing.T) {
 }
 
 func TestBookAPI_GetBook(t *testing.T) {
-	app := helpers.SetupTestApp(t)
-	defer helpers.CleanupDatabase(t)
+	app := setupTestApp(t)
+	defer test.CleanupDatabase(t)
 
 	t.Run("success", func(t *testing.T) {
 		createBook(t, "1984", "George Orwell")
@@ -233,8 +235,8 @@ func TestBookAPI_GetBook(t *testing.T) {
 }
 
 func TestBookAPI_UpdateBook(t *testing.T) {
-	app := helpers.SetupTestApp(t)
-	defer helpers.CleanupDatabase(t)
+	app := setupTestApp(t)
+	defer test.CleanupDatabase(t)
 
 	t.Run("success", func(t *testing.T) {
 		createBook(t, "Original Title", "Original Author")
@@ -260,7 +262,7 @@ func TestBookAPI_UpdateBook(t *testing.T) {
 		}
 
 		var title, author string
-		err := helpers.DB().QueryRow(
+		err := test.DB().QueryRow(
 			context.Background(),
 			"SELECT title, author FROM books WHERE id = 1",
 		).Scan(&title, &author)
@@ -298,8 +300,8 @@ func TestBookAPI_UpdateBook(t *testing.T) {
 }
 
 func TestBookAPI_DeleteBook(t *testing.T) {
-	app := helpers.SetupTestApp(t)
-	defer helpers.CleanupDatabase(t)
+	app := setupTestApp(t)
+	defer test.CleanupDatabase(t)
 
 	t.Run("success", func(t *testing.T) {
 		createBook(t, "To Delete", "Author")
@@ -313,7 +315,7 @@ func TestBookAPI_DeleteBook(t *testing.T) {
 		}
 
 		var count int
-		err := helpers.DB().QueryRow(
+		err := test.DB().QueryRow(
 			context.Background(),
 			"SELECT COUNT(*) FROM books WHERE id = 1",
 		).Scan(&count)
@@ -340,7 +342,7 @@ func TestBookAPI_DeleteBook(t *testing.T) {
 
 // Helper function to create a book
 func createBook(t *testing.T, title, author string) {
-	_, err := helpers.DB().Exec(context.Background(),
+	_, err := test.DB().Exec(context.Background(),
 		"INSERT INTO books (title, author) VALUES ($1, $2)",
 		title, author,
 	)
