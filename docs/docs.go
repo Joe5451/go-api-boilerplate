@@ -59,13 +59,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     }
                 }
@@ -89,7 +89,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreateBookReq"
+                            "$ref": "#/definitions/book.CreateBookReq"
                         }
                     }
                 ],
@@ -100,13 +100,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     }
                 }
@@ -144,19 +144,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     }
                 }
@@ -187,7 +187,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.UpdateBookReq"
+                            "$ref": "#/definitions/book.UpdateBookReq"
                         }
                     }
                 ],
@@ -198,19 +198,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     }
                 }
@@ -243,19 +243,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/util.HTTPError"
+                            "$ref": "#/definitions/restkit.Error"
                         }
                     }
                 }
@@ -263,18 +263,39 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "constant.ErrorCode": {
-            "type": "string",
-            "enum": [
-                "VALIDATION_ERROR",
-                "NOT_FOUND",
-                "INTERNAL_SERVER_ERROR"
+        "book.CreateBookReq": {
+            "type": "object",
+            "required": [
+                "author",
+                "title"
             ],
-            "x-enum-varnames": [
-                "ErrValidationCode",
-                "ErrNotFoundCode",
-                "ErrInternalServerError"
-            ]
+            "properties": {
+                "author": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "The Great Gatsby"
+                }
+            }
+        },
+        "book.UpdateBookReq": {
+            "type": "object",
+            "required": [
+                "author",
+                "title"
+            ],
+            "properties": {
+                "author": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "The Great Gatsby"
+                }
+            }
         },
         "domain.Book": {
             "type": "object",
@@ -290,56 +311,32 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.CreateBookReq": {
-            "type": "object",
-            "required": [
-                "author",
-                "title"
-            ],
-            "properties": {
-                "author": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "The Great Gatsby"
-                }
-            }
-        },
-        "handlers.UpdateBookReq": {
-            "type": "object",
-            "required": [
-                "author",
-                "title"
-            ],
-            "properties": {
-                "author": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "The Great Gatsby"
-                }
-            }
-        },
-        "util.HTTPError": {
+        "restkit.Error": {
             "type": "object",
             "properties": {
                 "code": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/constant.ErrorCode"
-                        }
-                    ],
-                    "example": "ERROR_CODE"
+                    "$ref": "#/definitions/restkit.ErrorCode"
                 },
                 "message": {
-                    "type": "string",
-                    "example": "Error message"
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
                 }
             }
+        },
+        "restkit.ErrorCode": {
+            "type": "string",
+            "enum": [
+                "INTERNAL_ERROR",
+                "VALIDATION_FAILED",
+                "NOT_FOUND"
+            ],
+            "x-enum-varnames": [
+                "ErrCodeInternalError",
+                "ErrCodeValidationFailed",
+                "ErrCodeNotFound"
+            ]
         }
     }
 }`
