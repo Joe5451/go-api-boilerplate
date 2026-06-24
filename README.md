@@ -52,17 +52,25 @@ POSTGRES_SCHEMA=public
 
 ```text
 .
-├── cmd/
+├── cmd
+│   ├── graphql (not yet implemented)
+│   ├── grpc (not yet implemented)
+│   └── rest
 ├── docs/
 ├── internal/
 │   ├── adapter/
+│   │   ├── repositories/
+│   │   └── rest/
+│   │       ├── book/
+│   │       ├── middlewares/
+│   │       └── restkit/
 │   ├── application/
 │   │   └── port/
-│   ├── bootstrap/
+│   │       ├── in/
+│   │       └── out/
 │   ├── config/
 │   ├── constant/
 │   ├── domain/
-│   ├── http/
 │   └── infra/
 ├── mocks/
 ├── test/
@@ -73,16 +81,14 @@ POSTGRES_SCHEMA=public
 
 | Directory/File | Description |
 |----------------|-------------|
-| `cmd/` | Application entrypoint (Gin + Swagger route) |
+| `cmd/` | Application entrypoints (REST, gRPC, GraphQL); composition root in each `main.go` |
 | `docs/` | Generated Swagger artifacts (swaggo) |
 | `internal/adapter/` | Implementations of ports (handlers, repositories) |
 | `internal/application/` | Use cases (business flows) |
 | `internal/application/port/` | Interfaces (in/out) for dependency inversion |
-| `internal/bootstrap/` | Dependency injection wiring |
 | `internal/config/` | Config loading and structs |
 | `internal/constant/` | Shared error codes/constants |
 | `internal/domain/` | Entities + domain rules (no dependencies on other layers) |
-| `internal/http/` | HTTP routes, middleware, HTTP helpers |
 | `internal/infra/` | Infrastructure (Postgres pool) |
 | `mocks/` | Generated mocks (go.uber.org/mock) |
 | `test/` | Feature tests (testcontainers + httptest) |
@@ -96,7 +102,7 @@ This project follows Clean Architecture. Dependencies point inward:
 - **Application** (`internal/application` + `internal/application/port`): use cases depend on interfaces, not implementations
 - **Adapters** (`internal/adapter`): HTTP handlers and repository implementations that satisfy ports
 - **Infra** (`internal/infra`): database connection setup (pgxpool)
-- **Bootstrap** (`internal/bootstrap`): wires everything together
+- **Composition root** (`cmd/`): wires dependencies and starts each transport
 
 This keeps business logic testable and decoupled from transport (HTTP) and infrastructure (Postgres).
 
@@ -112,21 +118,21 @@ docker compose up -d postgres
 
 The database schema is initialized from `init.sql`.
 
-### 2. Run the API server
+### 2. Run the REST API server
 
 ```bash
-go run ./cmd/main.go
+go run ./cmd/rest/main.go
 ```
 
 Server will listen on:
-- `http://localhost:8080`
+- http://localhost:8080
 
 Swagger UI:
-- `http://localhost:8080/swagger/index.html`
+- http://localhost:8080/swagger/index.html
 
 ## API Endpoints
 
-Base URL: `http://localhost:8080`
+Base URL: http://localhost:8080
 
 Books:
 - `POST /books`
@@ -160,7 +166,7 @@ go test ./... -count=1
 Feature tests (requires Docker; uses [testcontainers](https://github.com/testcontainers/testcontainers-go)):
 
 ```bash
-go test ./test/api/... -v
+go test ./test/rest/... -v
 ```
 
 ## Swagger
@@ -169,5 +175,5 @@ Install `swag` and regenerate:
 
 ```bash
 go install github.com/swaggo/swag/cmd/swag@latest
-swag init -g cmd/main.go
+swag init -g cmd/rest/main.go
 ```

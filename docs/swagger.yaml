@@ -1,15 +1,29 @@
 basePath: /
 definitions:
-  constant.ErrorCode:
-    enum:
-    - VALIDATION_ERROR
-    - NOT_FOUND
-    - INTERNAL_SERVER_ERROR
-    type: string
-    x-enum-varnames:
-    - ErrValidationCode
-    - ErrNotFoundCode
-    - ErrInternalServerError
+  book.CreateBookReq:
+    properties:
+      author:
+        example: John Doe
+        type: string
+      title:
+        example: The Great Gatsby
+        type: string
+    required:
+    - author
+    - title
+    type: object
+  book.UpdateBookReq:
+    properties:
+      author:
+        example: John Doe
+        type: string
+      title:
+        example: The Great Gatsby
+        type: string
+    required:
+    - author
+    - title
+    type: object
   domain.Book:
     properties:
       author:
@@ -19,40 +33,25 @@ definitions:
       title:
         type: string
     type: object
-  handlers.CreateBookReq:
-    properties:
-      author:
-        example: John Doe
-        type: string
-      title:
-        example: The Great Gatsby
-        type: string
-    required:
-    - author
-    - title
-    type: object
-  handlers.UpdateBookReq:
-    properties:
-      author:
-        example: John Doe
-        type: string
-      title:
-        example: The Great Gatsby
-        type: string
-    required:
-    - author
-    - title
-    type: object
-  util.HTTPError:
+  restkit.Error:
     properties:
       code:
-        allOf:
-        - $ref: '#/definitions/constant.ErrorCode'
-        example: ERROR_CODE
+        $ref: '#/definitions/restkit.ErrorCode'
       message:
-        example: Error message
         type: string
+      status:
+        type: integer
     type: object
+  restkit.ErrorCode:
+    enum:
+    - INTERNAL_ERROR
+    - VALIDATION_FAILED
+    - NOT_FOUND
+    type: string
+    x-enum-varnames:
+    - ErrCodeInternalError
+    - ErrCodeValidationFailed
+    - ErrCodeNotFound
 host: localhost:8080
 info:
   contact: {}
@@ -89,11 +88,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
       summary: Get books
       tags:
       - books
@@ -107,7 +106,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.CreateBookReq'
+          $ref: '#/definitions/book.CreateBookReq'
       produces:
       - application/json
       responses:
@@ -116,11 +115,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
       summary: Create a book
       tags:
       - books
@@ -143,15 +142,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
       summary: Delete a book
       tags:
       - books
@@ -175,15 +174,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
       summary: Get a book
       tags:
       - books
@@ -202,7 +201,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.UpdateBookReq'
+          $ref: '#/definitions/book.UpdateBookReq'
       produces:
       - application/json
       responses:
@@ -211,15 +210,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/util.HTTPError'
+            $ref: '#/definitions/restkit.Error'
       summary: Update a book
       tags:
       - books

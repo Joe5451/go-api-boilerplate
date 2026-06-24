@@ -1,29 +1,14 @@
-package handlers
+package book
 
 import (
 	"errors"
-	"go-api-boilerplate/internal/application/port/in"
-	"go-api-boilerplate/internal/constant"
-	"go-api-boilerplate/internal/domain"
-	"go-api-boilerplate/internal/http/util"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-)
+	"go-api-boilerplate/internal/adapter/rest/restkit"
+	"go-api-boilerplate/internal/application/port/in"
+	"go-api-boilerplate/internal/domain"
 
-type (
-	CreateBookReq struct {
-		Title  string `json:"title" binding:"required" example:"The Great Gatsby"`
-		Author string `json:"author" binding:"required" example:"John Doe"`
-	}
-	GetBooksReq struct {
-		Page    int `form:"page,default=1" binding:"min=1" example:"1"`
-		PerPage int `form:"per_page,default=10" binding:"min=1,max=100" example:"10"`
-	}
-	UpdateBookReq struct {
-		Title  string `json:"title" binding:"required" example:"The Great Gatsby"`
-		Author string `json:"author" binding:"required" example:"John Doe"`
-	}
+	"github.com/gin-gonic/gin"
 )
 
 type BookHandler struct {
@@ -42,13 +27,13 @@ func NewBookHandler(bookService in.BookUseCase) *BookHandler {
 // @Produce      json
 // @Param        request  body		CreateBookReq	true "Create book"
 // @Success      204  {object}	nil
-// @Failure      400  {object}  util.HTTPError
-// @Failure      500  {object}  util.HTTPError
+// @Failure      400  {object}  restkit.Error
+// @Failure      500  {object}  restkit.Error
 // @Router       /books [post]
 func (h *BookHandler) CreateBook(c *gin.Context) {
 	var json CreateBookReq
 	if err := c.ShouldBindJSON(&json); err != nil {
-		util.NewError(c, http.StatusBadRequest, constant.ErrValidationCode, err)
+		c.Error(restkit.NewValidationError(err))
 		return
 	}
 
@@ -74,9 +59,9 @@ func (h *BookHandler) CreateBook(c *gin.Context) {
 // @Produce      json
 // @Param        id  path  int  true  "Book ID"
 // @Success      200  {object}  domain.Book
-// @Failure      400  {object}  util.HTTPError
-// @Failure      404  {object}  util.HTTPError
-// @Failure      500  {object}  util.HTTPError
+// @Failure      400  {object}  restkit.Error
+// @Failure      404  {object}  restkit.Error
+// @Failure      500  {object}  restkit.Error
 // @Router       /books/{id} [get]
 func (h *BookHandler) GetBook(c *gin.Context) {
 	type params struct {
@@ -84,14 +69,14 @@ func (h *BookHandler) GetBook(c *gin.Context) {
 	}
 	var p params
 	if err := c.ShouldBindUri(&p); err != nil {
-		util.NewError(c, http.StatusBadRequest, constant.ErrValidationCode, err)
+		c.Error(restkit.NewValidationError(err))
 		return
 	}
 
 	book, err := h.bookService.GetBook(c.Request.Context(), p.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrBookNotFound) {
-			util.NewError(c, http.StatusNotFound, constant.ErrNotFoundCode, domain.ErrBookNotFound)
+			c.Error(restkit.NewNotFoundError(domain.ErrBookNotFound.Error()))
 			return
 		}
 		c.Error(err)
@@ -119,13 +104,13 @@ func (h *BookHandler) GetBook(c *gin.Context) {
 // @Param        page  query  int  false  "Page"
 // @Param        per_page  query  int  false  "Per Page"
 // @Success      200  {object}  []domain.Book
-// @Failure      400  {object}  util.HTTPError
-// @Failure      500  {object}  util.HTTPError
+// @Failure      400  {object}  restkit.Error
+// @Failure      500  {object}  restkit.Error
 // @Router       /books [get]
 func (h *BookHandler) GetBooks(c *gin.Context) {
 	var query GetBooksReq
 	if err := c.ShouldBindQuery(&query); err != nil {
-		util.NewError(c, http.StatusBadRequest, constant.ErrValidationCode, err)
+		c.Error(restkit.NewValidationError(err))
 		return
 	}
 
@@ -147,9 +132,9 @@ func (h *BookHandler) GetBooks(c *gin.Context) {
 // @Param        id  path  int  true  "Book ID"
 // @Param        request  body  UpdateBookReq  true  "Update book"
 // @Success      204  {object}  nil
-// @Failure      400  {object}  util.HTTPError
-// @Failure      404  {object}  util.HTTPError
-// @Failure      500  {object}  util.HTTPError
+// @Failure      400  {object}  restkit.Error
+// @Failure      404  {object}  restkit.Error
+// @Failure      500  {object}  restkit.Error
 // @Router       /books/{id} [put]
 func (h *BookHandler) UpdateBook(c *gin.Context) {
 	type params struct {
@@ -157,13 +142,13 @@ func (h *BookHandler) UpdateBook(c *gin.Context) {
 	}
 	var p params
 	if err := c.ShouldBindUri(&p); err != nil {
-		util.NewError(c, http.StatusBadRequest, constant.ErrValidationCode, err)
+		c.Error(restkit.NewValidationError(err))
 		return
 	}
 
 	var json UpdateBookReq
 	if err := c.ShouldBindJSON(&json); err != nil {
-		util.NewError(c, http.StatusBadRequest, constant.ErrValidationCode, err)
+		c.Error(restkit.NewValidationError(err))
 		return
 	}
 
@@ -174,7 +159,7 @@ func (h *BookHandler) UpdateBook(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrBookNotFound) {
-			util.NewError(c, http.StatusNotFound, constant.ErrNotFoundCode, domain.ErrBookNotFound)
+			c.Error(restkit.NewNotFoundError(domain.ErrBookNotFound.Error()))
 			return
 		}
 		c.Error(err)
@@ -191,9 +176,9 @@ func (h *BookHandler) UpdateBook(c *gin.Context) {
 // @Produce      json
 // @Param        id  path  int  true  "Book ID"
 // @Success      204  {object}  nil
-// @Failure      400  {object}  util.HTTPError
-// @Failure      404  {object}  util.HTTPError
-// @Failure      500  {object}  util.HTTPError
+// @Failure      400  {object}  restkit.Error
+// @Failure      404  {object}  restkit.Error
+// @Failure      500  {object}  restkit.Error
 // @Router       /books/{id} [delete]
 func (h *BookHandler) DeleteBook(c *gin.Context) {
 	type params struct {
@@ -201,17 +186,17 @@ func (h *BookHandler) DeleteBook(c *gin.Context) {
 	}
 	var p params
 	if err := c.ShouldBindUri(&p); err != nil {
-		util.NewError(c, http.StatusBadRequest, constant.ErrValidationCode, err)
+		c.Error(restkit.NewValidationError(err))
 		return
 	}
 
 	err := h.bookService.DeleteBook(c.Request.Context(), p.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrBookNotFound) {
-			util.NewError(c, http.StatusNotFound, constant.ErrNotFoundCode, domain.ErrBookNotFound)
+			c.Error(restkit.NewNotFoundError(domain.ErrBookNotFound.Error()))
 			return
 		}
-		util.NewError(c, http.StatusInternalServerError, constant.ErrInternalServerError, err)
+		c.Error(err)
 		return
 	}
 	c.Status(http.StatusNoContent)
