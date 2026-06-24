@@ -125,14 +125,14 @@ go run ./cmd/rest/main.go
 ```
 
 Server will listen on:
-- `http://localhost:8080`
+- http://localhost:8080
 
 Swagger UI:
-- `http://localhost:8080/swagger/index.html`
+- http://localhost:8080/swagger/index.html
 
 ## API Endpoints
 
-Base URL: `http://localhost:8080`
+Base URL: http://localhost:8080
 
 Books:
 - `POST /books`
