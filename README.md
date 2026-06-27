@@ -106,6 +106,18 @@ This project follows Clean Architecture. Dependencies point inward:
 
 This keeps business logic testable and decoupled from transport (HTTP) and infrastructure (Postgres).
 
+### Directory and file naming conventions
+
+#### Directory Naming: `lowercase` only
+
+Use lowercase for directory names. Avoid snake_case, CamelCase, and special separators.
+
+#### File naming: `snake_case`
+
+Use `snake_case` for Go source files to improve readability, especially when names combine multiple words.
+
+Single-word files (e.g. `book.go`, `config.go`, `routes.go`) are fine as-is. Test files follow the same rule: `book_service_test.go`, `pg_book_repo_test.go`.
+
 ## Run
 
 ### 1. Start PostgreSQL (via Docker)
