@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"go-api-boilerplate/internal/adapter/repositories"
+	"go-api-boilerplate/internal/adapter/repositories/postgres"
 	"go-api-boilerplate/internal/adapter/rest"
 	"go-api-boilerplate/internal/adapter/rest/book"
 	"go-api-boilerplate/internal/application"
@@ -41,7 +41,7 @@ func initializeRestApp(ctx context.Context) (*restApp, error) {
 		return nil, err
 	}
 
-	bookRepo := repositories.NewPostgresBookRepo(db)
+	bookRepo := postgres.NewPostgresBookRepo(db)
 	bookService := application.NewBookService(bookRepo)
 	bookHandler := book.NewBookHandler(bookService)
 

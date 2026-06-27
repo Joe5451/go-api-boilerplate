@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"go-api-boilerplate/internal/adapter/repositories"
+	pg "go-api-boilerplate/internal/adapter/repositories/postgres"
 	"go-api-boilerplate/internal/adapter/rest"
 	"go-api-boilerplate/internal/adapter/rest/book"
 	"go-api-boilerplate/internal/application"
@@ -73,7 +73,7 @@ func InitRestApp(ctx context.Context) (*RestApp, error) {
 		return nil, err
 	}
 
-	bookRepo := repositories.NewPostgresBookRepo(db)
+	bookRepo := pg.NewPostgresBookRepo(db)
 	bookService := application.NewBookService(bookRepo)
 	bookHandler := book.NewBookHandler(bookService)
 
