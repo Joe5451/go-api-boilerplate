@@ -14,10 +14,12 @@ var (
 type config struct {
 	debug bool
 	pg    Postgres
+	grpc  Grpc
 }
 
 func (c *config) Debug() bool        { return c.debug }
 func (c *config) Postgres() Postgres { return c.pg }
+func (c *config) Grpc() Grpc         { return c.grpc }
 
 func Config() *config {
 	once.Do(func() {
@@ -30,6 +32,11 @@ func Config() *config {
 
 		_ = viper.ReadInConfig()
 
+		grpcPort := viper.GetInt("GRPC_PORT")
+		if grpcPort == 0 {
+			grpcPort = 50051
+		}
+
 		cfg = &config{
 			debug: viper.GetBool("DEBUG"),
 			pg: Postgres{
@@ -39,6 +46,9 @@ func Config() *config {
 				Password: viper.GetString("POSTGRES_PASSWORD"),
 				DBName:   viper.GetString("POSTGRES_DBNAME"),
 				Schema:   viper.GetString("POSTGRES_SCHEMA"),
+			},
+			grpc: Grpc{
+				Port: grpcPort,
 			},
 		}
 	})
