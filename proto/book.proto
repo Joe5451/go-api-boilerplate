@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "go-api-boilerplate/proto";
+
+service BookService {
+  rpc CreateBook(CreateBookRequest) returns (CreateBookResponse);
+  rpc GetBook(GetBookRequest) returns (GetBookResponse);
+  rpc GetBooks(GetBooksRequest) returns (GetBooksResponse);
+  rpc UpdateBook(UpdateBookRequest) returns (UpdateBookResponse);
+  rpc DeleteBook(DeleteBookRequest) returns (DeleteBookResponse);
+}
+
+message Book {
+  int32 id = 1;
+  string title = 2;
+  string author = 3;
+}
+
+message CreateBookRequest {
+  string title = 1;
+  string author = 2;
+}
+
+message CreateBookResponse {}
+
+message GetBookRequest {
+  int32 id = 1;
+}
+
+message GetBookResponse {
+  Book book = 1;
+}
+
+message GetBooksRequest {
+  int32 page = 1;
+  int32 per_page = 2;
+}
+
+message GetBooksResponse {
+  repeated Book books = 1;
+}
+
+message UpdateBookRequest {
+  int32 id = 1;
+  string title = 2;
+  string author = 3;
+}
+
+message UpdateBookResponse {}
+
+message DeleteBookRequest {
+  int32 id = 1;
+}
+
+message DeleteBookResponse {}

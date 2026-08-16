@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Joe5451/go-api-boilerplate)](https://goreportcard.com/report/github.com/Joe5451/go-api-boilerplate)
 
-A foundational **Go API project layout** built with **Gin** web framework, **PostgreSQL**, and **Swagger** documentation. This boilerplate provides a well-structured Clean Architecture foundation to help you start new Go projects without having to rethink the project directory structure from scratch.
+A foundational **Go API project layout** built with **Gin** (REST), **gRPC**, **PostgreSQL**, and **Swagger** documentation. This boilerplate provides a well-structured Clean Architecture foundation to help you start new Go projects without having to rethink the project directory structure from scratch.
 
 ## Purpose
 
@@ -46,6 +46,9 @@ POSTGRES_USER=
 POSTGRES_PASSWORD=
 POSTGRES_DBNAME=book
 POSTGRES_SCHEMA=public
+
+# grpc
+GRPC_PORT=50051
 ```
 
 ## Project Layout
@@ -54,11 +57,19 @@ POSTGRES_SCHEMA=public
 .
 ├── cmd
 │   ├── graphql (not yet implemented)
-│   ├── grpc (not yet implemented)
+│   ├── grpc
 │   └── rest
+├── proto/
+│   ├── book.proto
+│   ├── book.pb.go
+│   └── book_grpc.pb.go
 ├── docs/
 ├── internal/
 │   ├── adapter/
+│   │   ├── grpc/
+│   │   │   ├── book/
+│   │   │   ├── interceptors/
+│   │   │   └── grpckit/
 │   │   ├── repositories/
 │   │   └── rest/
 │   │       ├── book/
@@ -74,6 +85,8 @@ POSTGRES_SCHEMA=public
 │   └── infra/
 ├── mocks/
 ├── test/
+│   ├── grpc/
+│   └── rest/
 ├── Dockerfile
 ├── docker-compose.yml
 └── init.sql
@@ -82,8 +95,9 @@ POSTGRES_SCHEMA=public
 | Directory/File | Description |
 |----------------|-------------|
 | `cmd/` | Application entrypoints (REST, gRPC, GraphQL); composition root in each `main.go` |
+| `proto/` | Protocol Buffers definitions and generated Go code (`book.proto`, `book.pb.go`, `book_grpc.pb.go`) |
 | `docs/` | Generated Swagger artifacts (swaggo) |
-| `internal/adapter/` | Implementations of ports (handlers, repositories) |
+| `internal/adapter/` | Implementations of ports (REST/gRPC handlers, repositories) |
 | `internal/application/` | Use cases (business flows) |
 | `internal/application/port/` | Interfaces (in/out) for dependency inversion |
 | `internal/config/` | Config loading and structs |
@@ -91,7 +105,7 @@ POSTGRES_SCHEMA=public
 | `internal/domain/` | Entities + domain rules (no dependencies on other layers) |
 | `internal/infra/` | Infrastructure (Postgres pool) |
 | `mocks/` | Generated mocks (go.uber.org/mock) |
-| `test/` | Feature tests (testcontainers + httptest) |
+| `test/` | Feature tests (testcontainers + httptest / bufconn) |
 | `Dockerfile` | Container build for the app |
 | `docker-compose.yml` | Postgres (and optional app) for local/dev |
 | `init.sql` | DB schema init for Postgres containers |
@@ -100,11 +114,11 @@ This project follows Clean Architecture. Dependencies point inward:
 
 - **Domain** (`internal/domain`): entities and domain errors (pure Go, no frameworks)
 - **Application** (`internal/application` + `internal/application/port`): use cases depend on interfaces, not implementations
-- **Adapters** (`internal/adapter`): HTTP handlers and repository implementations that satisfy ports
+- **Adapters** (`internal/adapter`): HTTP/gRPC handlers and repository implementations that satisfy ports
 - **Infra** (`internal/infra`): database connection setup (pgxpool)
 - **Composition root** (`cmd/`): wires dependencies and starts each transport
 
-This keeps business logic testable and decoupled from transport (HTTP) and infrastructure (Postgres).
+This keeps business logic testable and decoupled from transport (HTTP, gRPC) and infrastructure (Postgres).
 
 ### Directory and file naming conventions
 
@@ -141,6 +155,24 @@ Server will listen on:
 
 Swagger UI:
 - http://localhost:8080/swagger/index.html
+
+### 3. Run the gRPC server
+
+```bash
+go run ./cmd/grpc
+```
+
+Server will listen on:
+- localhost:50051 (override with `GRPC_PORT`)
+
+When `DEBUG=true`, server reflection is enabled for tools like [grpcurl](https://github.com/fullstorydev/grpcurl):
+
+```bash
+grpcurl -plaintext localhost:50051 list
+grpcurl -plaintext -d '{"title":"1984","author":"George Orwell"}' \
+  localhost:50051 proto.BookService/CreateBook
+grpcurl -plaintext -d '{"id":1}' localhost:50051 proto.BookService/GetBook
+```
 
 ## API Endpoints
 
@@ -179,6 +211,7 @@ Feature tests (requires Docker; uses [testcontainers](https://github.com/testcon
 
 ```bash
 go test ./test/rest/... -v
+go test ./test/grpc/... -v
 ```
 
 ## Swagger
@@ -188,4 +221,14 @@ Install `swag` and regenerate:
 ```bash
 go install github.com/swaggo/swag/cmd/swag@latest
 swag init -g cmd/rest/main.go
+```
+
+## Protobuf
+
+Regenerate gRPC Go code after changing `proto/book.proto`:
+
+```bash
+protoc --go_out=. --go_opt=paths=source_relative \
+       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+       proto/book.proto
 ```
