@@ -17,10 +17,15 @@ func NewFieldError(err validator.FieldError) *fieldError {
 
 func (q fieldError) String() string {
 	var sb strings.Builder
-	sb.WriteString("validation failed on field '" + q.err.Field() + "'")
-	sb.WriteString(", condition: " + q.err.ActualTag())
+	sb.WriteString("validation failed on field '")
+	sb.WriteString(q.err.Field())
+	sb.WriteString("'")
+	sb.WriteString(", condition: ")
+	sb.WriteString(q.err.ActualTag())
 	if q.err.Param() != "" {
-		sb.WriteString(" { " + q.err.Param() + " }")
+		sb.WriteString(" { ")
+		sb.WriteString(q.err.Param())
+		sb.WriteString(" }")
 	}
 	if q.err.Value() != nil && q.err.Value() != "" {
 		sb.WriteString(fmt.Sprintf(", actual: %v", q.err.Value()))
