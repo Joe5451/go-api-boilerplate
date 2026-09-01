@@ -19,7 +19,7 @@ Use this boilerplate as a foundation when starting new Go projects, so you don't
 
 ## Prerequisites
 
-- Go 1.25.1
+- Go 1.27.0
 - Docker
   - For local PostgreSQL via `docker compose`
   - Required for feature tests (uses testcontainers-go)
